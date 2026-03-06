@@ -1,0 +1,272 @@
+<!doctype html>
+<notebook theme="air">
+  <title>Markov Models</title>
+  <script id="2" type="text/markdown">
+    # Markov Models
+
+    A **Markov model** is a stochastic process where the probability of each event depends only on the state attained in the previous event. Named after Russian mathematician Andrey Markov, these models are fundamental to understanding probabilistic systems with "memoryless" properties.
+
+    ## Key Concepts
+
+    - **Markov Property**: The future state depends only on the current state, not on the sequence of events that preceded it
+    - **State Space**: The set of all possible states in the system
+    - **Transition Matrix**: Defines the probabilities of moving from one state to another
+    - **Stationary Distribution**: The long-run probability distribution over states
+
+    ## Applications
+
+    Markov models are widely used in:
+    - Natural language processing (text generation)
+    - Finance (stock price modeling)
+    - Biology (gene sequencing)
+    - Weather prediction
+    - Machine learning algorithms
+  </script>
+  <script id="3" type="module" pinned="">
+    // Simple Markov Chain Text Generator
+    // This will be our foundation for building more complex generators
+
+    class MarkovChain {
+      constructor(order = 1) {
+        this.order = order;
+        this.chain = new Map();
+      }
+
+      // Train the model on input text
+      train(text) {
+        const words = text.toLowerCase().split(/\s+/).filter(word => word.length > 0);
+
+        for (let i = 0; i <= words.length - this.order; i++) {
+          const state = words.slice(i, i + this.order).join(' ');
+          const nextWord = words[i + this.order];
+
+          if (!this.chain.has(state)) {
+            this.chain.set(state, []);
+          }
+
+          if (nextWord) {
+            this.chain.get(state).push(nextWord);
+          }
+        }
+      }
+
+      // Generate text of specified length
+      generate(length = 50, seed = null) {
+        if (this.chain.size === 0) return "No training data available.";
+
+        // Choose starting state
+        let currentState;
+        if (seed && seed.trim()) {
+          const seedWords = seed.toLowerCase().split(/\s+/).slice(-this.order);
+          if (seedWords.length === this.order) {
+            const seedState = seedWords.join(' ');
+            currentState = this.chain.has(seedState) ? seedState :
+                          [...this.chain.keys()][Math.floor(Math.random() * this.chain.size)];
+          } else {
+            // Find a state that contains some of the seed words
+            const possibleStates = [...this.chain.keys()].filter(state =>
+              seedWords.some(word => state.includes(word))
+            );
+            currentState = possibleStates.length > 0 ?
+                          possibleStates[Math.floor(Math.random() * possibleStates.length)] :
+                          [...this.chain.keys()][Math.floor(Math.random() * this.chain.size)];
+          }
+        } else {
+          currentState = [...this.chain.keys()][Math.floor(Math.random() * this.chain.size)];
+        }
+
+        const result = currentState.split(' ');
+
+        for (let i = 0; i < length - this.order; i++) {
+          const possibleNext = this.chain.get(currentState);
+          if (!possibleNext || possibleNext.length === 0) break;
+
+          const nextWord = possibleNext[Math.floor(Math.random() * possibleNext.length)];
+          result.push(nextWord);
+
+          // Update current state
+          const stateWords = currentState.split(' ');
+          stateWords.shift();
+          stateWords.push(nextWord);
+          currentState = stateWords.join(' ');
+
+          if (!this.chain.has(currentState)) break;
+        }
+
+        return result.join(' ');
+      }
+
+      // Get statistics about the model
+      getStats() {
+        return {
+          states: this.chain.size,
+          order: this.order,
+          totalTransitions: [...this.chain.values()].reduce((sum, arr) => sum + arr.length, 0)
+        };
+      }
+    }
+
+    // Create a simple example
+    const markov = new MarkovChain(2);
+    display("Markov Chain Text Generator initialized!");
+  </script>
+  <script id="4" type="module" pinned="">
+    // Professor's communication style - training text (expanded)
+    const professorText = `
+    hello all,
+
+    Reading and Presentation
+    Rafi will present on Bender et al. Stochastic Parrots with Becky as advocate.
+
+    John's ObservableNotebooks in its separately shared folder to allow you to copy folder structure, template files, etc.
+    You can look into this and check, for example, that you have a matching folder structure for your own local projects and experiments. You can also see and copy template and configuration files if you like. Or you can copy the actual notebook files currently index.html and setupnotebookkit.html and markovmodel.html inside the docs folder. Then play with your copies of these files if you'd like.
+    This folder is also now being used to develop and maintain a website where you can see the results of publishing these Observable notebooks using only free GitHub and GitHub Pages. Although I have also used my own domain name for the site, which is not necessary. The URL could just be a github.io URL.
+    Do have a look at this site and also read it for content to continue with your setup see below in assignments.
+
+    Assignment
+    The main assignment for this week is very open. It assumes that you have Observable Desktop up and running and have added the Claude API key with five dollars credit. After you've got this far you will continue to research Markov Models and you will make a simple but interesting or aesthetic Markov-driven text generator.
+    Additionally, please try to follow the instructions in either my setupnotebookkit.html by loading it into your Observable Desktop or online at withllms.programmatology.com steps six through eleven to have the actual Notebook Kit installed on your system locally.
+    Also Make at least one notebook file for your original writing. Add some of your own writing into the notebook and experiment with different approaches to text generation.
+    You can look into this and check that you have matching folder structure for your local projects. You can also see and copy template files if you like. Then play with your copies if you'd like.
+    Do have a look at this site and read it for content to continue with your setup. The main assignment is very open and assumes that you have Observable Desktop up and running.
+
+    hello all,
+
+    Firstly, our reading for Feb 4 – and on which Gigi will kindly present – will be: Hua, Minh, and Rita Raley. 'How to Do Things with Deep Learning Code.' Digital Humanities Quarterly 17, no. 2 (2023): n.p. https://www.digitalhumanities.org/dhq/vol/17/2/000684/000684.html. You can read this online and also get it from the Files tab on the Canvas site.
+
+    Then also, I have shared a Google Drive folder with you where we'll be able to share work and I have separately shared a folder in which I placed my own 'ObservableNotebooks' folder.
+
+    https://drive.google.com/drive/folders/1713iHHgveO8Bl6qXeEd__vcHT32yUktM?usp=drive_link
+
+    You can look into this and check, for example, that you have a matching folder structure for your own local projects and experiments. You can also see and copy template and configuration files if you like. Or you can copy the actual notebook files – currently: index.html and setupnotebookkit.html inside the docs folder. Then play with your copies of these files if you'd like.
+
+    This folder is also now being used to develop and maintain a website:
+    https://withllms.programmatology.com
+    ... where you can see the results of publishing these Observable notebooks using only free GitHub and GitHub Pages. I have also used my own domain name for the site, which is not necessary. The URL could just be a github.io URL.
+    Have a look at this site and also read it for content – if you have the time – to continue with your setup.
+
+    If you are curious and want to get a better sense of Observable, please go to https://observablehq.com, login with the accounts you already set up, and explore. My own Observable user name is 'shadoof', so you can go to https://observablehq.com/@shadoof to see how I have used the site so far. What you'll see are 'public' notebooks; there are others that are less visible.
+
+    Vitt and Ruchika: Have I got it right that you were the ones having trouble with the setup?
+    `;
+
+    // Train the model with professor's text
+    markov.train(professorText);
+
+    // Display model statistics
+    const stats = markov.getStats();
+    display(`Professor's speech model trained with ${stats.states} states and ${stats.totalTransitions} transitions`);
+
+    // Generate some sample "professor speak" with proper text wrapping
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui;">
+    <strong>Sample generated professor communication:</strong><br>
+    ${markov.generate(40, "the main assignment")}
+    </div>`);
+  </script>
+  <script id="5" type="module" pinned="">
+    // Generate some sample text with proper wrapping
+    const generatedText = markov.generate(30);
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui;">
+    <strong>Generated text:</strong><br>
+    ${generatedText}
+    </div>`);
+  </script>
+  <script id="9" type="module" pinned="">
+    // Let's also create a specialized professor model with higher order for more coherent speech patterns
+    const professorMarkov = new MarkovChain(3); // Higher order for more professor-like coherence
+    professorMarkov.train(professorText);
+
+    // Generate different types of professor communications with proper wrapping
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui;">
+    <strong>Professor giving assignment instructions:</strong><br>
+    ${professorMarkov.generate(35, "the assignment")}
+    </div>`);
+
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui; margin-top: 1em;">
+    <strong>Professor explaining technical setup:</strong><br>
+    ${professorMarkov.generate(30, "you can")}
+    </div>`);
+
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui; margin-top: 1em;">
+    <strong>Professor's casual greeting style:</strong><br>
+    ${professorMarkov.generate(25, "hello")}
+    </div>`);
+
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui; margin-top: 1em;">
+    <strong>Professor discussing Observable and resources:</strong><br>
+    ${professorMarkov.generate(40, "observable")}
+    </div>`);
+  </script>
+  <script id="11" type="module" pinned="">
+    // Generate an original poem in the professor's distinctive style
+    const poemMarkov = new MarkovChain(10); // Good balance for poetic flow
+    poemMarkov.train(professorText);
+
+    // Generate poem-like text with line breaks and professor's characteristic style
+    const generateProfessorPoem = () => {
+      const lines = [];
+      const starters = ["hello", "you can", "the", "this", "do", "reading", "check"];
+
+      for (let i = 0; i < 8; i++) {
+        const seed = starters[Math.floor(Math.random() * starters.length)];
+        const line = poemMarkov.generate(8, seed);
+        lines.push(line);
+      }
+
+      return lines.join('\n');
+    };
+
+    const professorPoem = generateProfessorPoem();
+
+    display(htl.html`<div style="max-width: 100%; font-family: 'Georgia', serif; background: #f5f5f5; padding: 2em; border-radius: 8px; border-left: 6px solid #4a90e2;">
+    <h3 style="margin-top: 0; color: #2c3e50;">An Ode to Academic Communication</h3>
+    <div style="white-space: pre-line; line-height: 1.6; font-style: italic; color: #34495e;">
+    ${professorPoem}
+    </div>
+    <p style="margin-bottom: 0; font-size: 0.9em; color: #7f8c8d; text-align: right;">
+    — Generated in the style of your professor's communications
+    </p>
+    </div>`);
+  </script>
+  <script id="10" type="text/markdown">
+    ## Professor Speech Pattern Analysis
+
+    This Markov model captures several distinctive patterns in your professor's communication style:
+
+    - **Casual openings**: "hello all,"
+    - **Technical instructions**: References to specific files, folders, and setup procedures
+    - **Parenthetical clarifications**: Frequent use of parentheses to add context
+    - **Encouraging language**: "you can look into this", "if you'd like", "do have a look"
+    - **Academic references**: Citations and technical terminology
+    - **Structured assignments**: Clear but open-ended task descriptions
+
+    The model learns these patterns and can generate new text that sounds remarkably similar to your professor's actual communication style!
+  </script>
+  <script id="6" type="text/markdown">
+    ## Interactive Text Generation
+
+    Now let's create an interactive interface where you can experiment with different parameters and see how they affect the generated text.
+  </script>
+  <script id="7" type="module" pinned="">
+    // Interactive controls for the Markov generator
+    const orderInput = view(Inputs.range([1, 4], {label: "Markov order", value: 2, step: 1}));
+    const lengthInput = view(Inputs.range([10, 100], {label: "Text length", value: 30, step: 5}));
+    const seedInput = view(Inputs.text({label: "Seed text (optional)", placeholder: "Enter starting words..."}));
+  </script>
+  <script id="8" type="module" pinned="">
+    // Create a new model with the selected order
+    const interactiveMarkov = new MarkovChain(orderInput);
+    interactiveMarkov.train(professorText);
+
+    // Generate text with current parameters and proper wrapping
+    const interactiveText = interactiveMarkov.generate(
+      lengthInput,
+      seedInput.trim() || null
+    );
+
+    display(htl.html`<div style="max-width: 100%; word-wrap: break-word; white-space: pre-wrap; font-family: system-ui; background: #f8f9fa; padding: 1em; border-radius: 4px; border-left: 4px solid #007acc;">
+    <strong>Interactive generation:</strong><br>
+    ${interactiveText}
+    </div>`);
+  </script>
+</notebook>
